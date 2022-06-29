@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="ScriptHelper.fsx" />
     <Compile Include="Program.fs" />
   </ItemGroup>
