@@ -51,48 +51,30 @@ let main argv =
         spawne system "remote" 
             <@ 
                 fun mailbox -> 
-                let rec loop(state: API.APIState): Cont<int * string, API.APIState> = 
+                let rec loop(state: API.APIState): Cont<API.StreamAPI<float>, API.APIState> = 
                     actor { 
                         let! msg = mailbox.Receive()
-                        match msg with
-                        | (REQ, m) -> 
-                            mailbox.Self.Path.Elements
-                            |> Seq.iteri(fun i el -> printfn "%d: %s\n" i el)
-                            mailbox.Sender().Path.Elements
-                            |> Seq.iteri(fun i el -> printfn "%d: %s\n" i el)
-                            let kk1 = mailbox.Self.Path.Address.Host
-                            let kk2 = mailbox.Context.System.Settings.ProviderClass.ToLower()
-                            let kk3 = mailbox.Self.Path.Address.System
-                            let kk4 = mailbox.Self.Path.Address.HostPort()
-                            let kk5 = mailbox.Self.Path.Address.ToString()
-                            let kk6 = mailbox.Self.Path.Address.ToString()
-                            
+                        let newState = 
+                            match msg with 
+                            | API.StreamAPI.Subscribe (s,f)  ->
+                                state
 
-
-                            // printfn "%s\n" zz
-                            printfn "%s\n" kk1
-                            // printfn "%d\n" kk2
-                            printfn "%s\n" kk3
-                            printfn "%s\n" kk4
-                            printfn "%s\n" kk5
-
-
-                            let uu = mailbox.Self.Path.Elements
-                            let x = Map.find "hello" state.RequesterMap
-                            printfn "Remote actor received: %A" x
-                            mailbox.Sender() <! (RES, "ECHO " + m)
-                        | _ -> logErrorf mailbox "Received unexpected message: %A" msg
-                        return! loop(state)
+                            | API.StreamAPI.Unsubscribe s ->
+                                printfn "Got unscunscribe message %s" s
+                                let maybeValue = state.RequesterMap.TryFind("hello")
+                                let v = 
+                                    match maybeValue with 
+                                    | Some hh -> hh
+                                    | None -> sprintf "No value for %s" "hello"
+                                printfn "Got unscubscribe message %s: %s" s v
+                                state
+                        
+                        return! loop(newState)
                     }
                 loop({API.APIState.RequesterMap = Map.ofList([("hello", "world")])})
                 @> [ SpawnOption.Deploy(remoteDeploy remoteSystemAddress) ]
-    async { 
-        let! msg = remoter <? (REQ, "hello")
-        match msg with
-        | (RES, m) -> printfn "Remote actor responded: %s" m
-        | _ -> printfn "Unexpected response from remote actor"
-    }
-    |> Async.RunSynchronously
+        
+    remoter <! API.StreamAPI.Unsubscribe "ss"
 
 
     ignore <| System.Console.ReadLine()
