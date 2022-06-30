@@ -89,7 +89,7 @@ let main argv =
         spawne system "remote" 
             <@ 
                 fun mailbox -> 
-                let rec loop(state: API.APIState): Cont<API.StreamAPI<float>, API.APIState> = 
+                let rec loop(state: API.APIState): Cont<API.StreamAPI, API.APIState> = 
                     actor { 
                         let! msg = mailbox.Receive()
                         let newState = 

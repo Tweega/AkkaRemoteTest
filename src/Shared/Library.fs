@@ -6,9 +6,9 @@ module API =
     open Akka.Remote
     open Akka.Routing
 
-    type MessageHandler<'T> = 'T -> unit
-    type StreamAPI<'T> = 
-        | Subscribe of string * MessageHandler<'T>
+    type MessageHandler = float -> unit
+    type StreamAPI = 
+        | Subscribe of string * MessageHandler
         | Unsubscribe of string
 
     type APIState = {
@@ -16,11 +16,17 @@ module API =
     }
 
 
-    let handleAPIMsg(mailbox: Actor<StreamAPI<float>>) (streamMsg:StreamAPI<float>) (apiState:APIState) =
+    let handleAPIMsg(mailbox: Actor<StreamAPI>) (streamMsg:StreamAPI) (apiState:APIState) =
         match streamMsg with 
         | Subscribe (s, f) -> 
             printfn "Got Subscribe message: %s" s
             apiState
         | Unsubscribe s -> 
             printfn "Got Unsubscribe message: %s" s
+
+            let jj = 
+                match Map.tryFind "hello" apiState.RequesterMap with 
+                | Some s -> s
+                | None -> "value for hello Not found"
+            printfn "Map look up:: %s" jj
             apiState
