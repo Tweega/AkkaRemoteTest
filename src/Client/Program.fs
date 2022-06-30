@@ -30,15 +30,53 @@ let REQ = 1
 let RES = 2
 
     
-let config =  
-    Configuration.parse
-        @"akka {
-            actor.provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
-            remote.helios.tcp {
-                hostname = localhost
-                port = 0
+let config =
+    Configuration.parse """
+        akka {
+            log-config-on-start = on
+            stdout-loglevel = DEBUG
+            loglevel = DEBUG
+            actor {
+                provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
+                serializers {
+                    hyperion = "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+                }
+                serialization-bindings {
+                    "System.Object" = hyperion
+                }
             }
-        }"
+            akka.actor.serialization-settings.hyperion.cross-platform-package-name-overrides = {
+                netfx = [
+                {
+                    fingerprint = "System.Private.CoreLib,%core%",
+                    rename-from = "System.Private.CoreLib,%core%",
+                    rename-to = "mscorlib,%core%"
+                }]
+                netcore = [
+                {
+                    fingerprint = "mscorlib,%core%",
+                    rename-from = "mscorlib,%core%",
+                    rename-to = "System.Private.CoreLib,%core%"
+                }]
+                net = [
+                {
+                    fingerprint = "mscorlib,%core%",
+                    rename-from = "mscorlib,%core%",
+                    rename-to = "System.Private.CoreLib,%core%"
+                }]
+            }
+            remote {
+                helios.tcp {
+                    transport-class = "Akka.Remote.Transport.Helios.HeliosTcpTransport, Akka.Remote"
+                    applied-adapters = []
+                    transport-protocol  = tcp
+                    port = 0
+                    hostname = localhost
+                }
+            }
+        }
+        """
+
 
 [<EntryPoint>]
 let main argv = 
@@ -55,26 +93,14 @@ let main argv =
                     actor { 
                         let! msg = mailbox.Receive()
                         let newState = 
-                            match msg with 
-                            | API.StreamAPI.Subscribe (s,f)  ->
-                                state
-
-                            | API.StreamAPI.Unsubscribe s ->
-                                printfn "Got unscunscribe message %s" s
-                                let maybeValue = state.RequesterMap.TryFind("hello")
-                                let v = 
-                                    match maybeValue with 
-                                    | Some hh -> hh
-                                    | None -> sprintf "No value for %s" "hello"
-                                printfn "Got unscubscribe message %s: %s" s v
-                                state
-                        
+                            API.handleAPIMsg mailbox msg state
                         return! loop(newState)
                     }
                 loop({API.APIState.RequesterMap = Map.ofList([("hello", "world")])})
                 @> [ SpawnOption.Deploy(remoteDeploy remoteSystemAddress) ]
+    let m = (API.StreamAPI.Unsubscribe "ss")
         
-    remoter <! API.StreamAPI.Unsubscribe "ss"
+    remoter.Tell m
 
 
     ignore <| System.Console.ReadLine()

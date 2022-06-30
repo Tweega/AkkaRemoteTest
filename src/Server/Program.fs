@@ -9,15 +9,53 @@ type ServerState = {
     SomeState: string
 }
 
-let config =  
-    Configuration.parse
-        @"akka {
-            actor.provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
-            remote.helios.tcp {
-                hostname = localhost
-                port = 0
+let config =
+    Configuration.parse """
+        akka {
+            log-config-on-start = on
+            stdout-loglevel = DEBUG
+            loglevel = DEBUG
+            actor {
+                provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
+                serializers {
+                    hyperion = "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+                }
+                serialization-bindings {
+                    "System.Object" = hyperion
+                }
             }
-        }"
+            akka.actor.serialization-settings.hyperion.cross-platform-package-name-overrides = {
+                netfx = [
+                {
+                    fingerprint = "System.Private.CoreLib,%core%",
+                    rename-from = "System.Private.CoreLib,%core%",
+                    rename-to = "mscorlib,%core%"
+                }]
+                netcore = [
+                {
+                    fingerprint = "mscorlib,%core%",
+                    rename-from = "mscorlib,%core%",
+                    rename-to = "System.Private.CoreLib,%core%"
+                }]
+                net = [
+                {
+                    fingerprint = "mscorlib,%core%",
+                    rename-from = "mscorlib,%core%",
+                    rename-to = "System.Private.CoreLib,%core%"
+                }]
+            }
+            remote {
+                helios.tcp {
+                    transport-class = "Akka.Remote.Transport.Helios.HeliosTcpTransport, Akka.Remote"
+                    applied-adapters = []
+                    transport-protocol  = tcp
+                    port = 9001
+                    hostname = localhost
+                }
+            }
+        }
+        """
+
 
 
 let createAkkaMailbox<'MsgType, 'State>(actorSystem, actorName: string, handleMsg: Actor<'MsgType> -> 'MsgType -> 'State -> 'State, initialState: 'State) : IActorRef =
