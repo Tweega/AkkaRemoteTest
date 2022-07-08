@@ -82,7 +82,6 @@ let config =
 let main argv = 
     let system = System.create "local-system" config  
     let remoteSystemAddress = "akka.tcp://remote-system@localhost:9001/"
-    let initialState: API.APIState = {API.APIState.RequesterMap = Map.empty}
     let remoter = 
     // as long as actor receive logic is serializable F# Expr, there is no need for sharing any assemblies 
     // all code will be serialized, deployed to remote system and there compiled and executed

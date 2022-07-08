@@ -31,7 +31,11 @@ module API =
             apiState
 
 
+    let getInitialState() = 
+        {APIState.RequesterMap = Map.ofList([("hello", "world")])}
+
     let getAkkaMailbox<'T>() = 
+        let initialState = getInitialState()
         fun (mailbox: Actor<StreamAPI<'T>>) -> 
             let rec loop(state: APIState): Cont<StreamAPI<'T>, APIState> = 
                 actor { 
@@ -40,7 +44,7 @@ module API =
                         handleAPIMsg mailbox msg state
                     return! loop(newState)
                 }
-            loop({APIState.RequesterMap = Map.ofList([("hello", "world")])})
+            loop(initialState)
 
     let dispatchMessage<'T> (iActorRef: IActorRef) (m: StreamAPI<'T>) =
 
