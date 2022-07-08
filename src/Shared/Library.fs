@@ -15,7 +15,6 @@ module API =
         RequesterMap: Map<string, string>
     }
 
-
     let handleAPIMsg(mailbox: Actor<StreamAPI>) (streamMsg:StreamAPI) (apiState:APIState) =
         match streamMsg with 
         | Subscribe (s, f) -> 
@@ -30,3 +29,16 @@ module API =
                 | None -> "value for hello Not found"
             printfn "Map look up:: %s" jj
             apiState
+
+
+    let getAkkaMailbox() = 
+        fun (mailbox: Actor<StreamAPI>) -> 
+            let rec loop(state: APIState): Cont<StreamAPI, APIState> = 
+                actor { 
+                    let! msg = mailbox.Receive()
+                    let newState = 
+                        handleAPIMsg mailbox msg state
+                    return! loop(newState)
+                }
+            loop({APIState.RequesterMap = Map.ofList([("hello", "world")])})
+

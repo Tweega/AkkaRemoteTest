@@ -34,8 +34,8 @@ let config =
     Configuration.parse """
         akka {
             log-config-on-start = on
-            stdout-loglevel = DEBUG
-            loglevel = DEBUG
+            stdout-loglevel = WARNING
+            loglevel = WARNING
             actor {
                 provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
                 serializers {
@@ -88,20 +88,13 @@ let main argv =
     // all code will be serialized, deployed to remote system and there compiled and executed
         spawne system "remote" 
             <@ 
-                fun mailbox -> 
-                let rec loop(state: API.APIState): Cont<API.StreamAPI, API.APIState> = 
-                    actor { 
-                        let! msg = mailbox.Receive()
-                        let newState = 
-                            API.handleAPIMsg mailbox msg state
-                        return! loop(newState)
-                    }
-                loop({API.APIState.RequesterMap = Map.ofList([("hello", "world")])})
+                API.getAkkaMailbox()
                 @> [ SpawnOption.Deploy(remoteDeploy remoteSystemAddress) ]
     let m = (API.StreamAPI.Unsubscribe "ss")
         
     remoter.Tell m
 
+    printfn "Press enter to close app"
 
-    ignore <| System.Console.ReadLine()
+    let _hh = System.Console.ReadLine()
     0 // return an integer exit code
