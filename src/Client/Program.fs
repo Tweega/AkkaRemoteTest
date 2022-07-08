@@ -88,11 +88,11 @@ let main argv =
     // all code will be serialized, deployed to remote system and there compiled and executed
         spawne system "remote" 
             <@ 
-                API.getAkkaMailbox(1.1)
-                @> [ SpawnOption.Deploy(remoteDeploy remoteSystemAddress) ]
-    let m: API.StreamAPI<float> = (API.StreamAPI.Unsubscribe "ss")
-        
-    remoter.Tell m
+                API.getAkkaMailbox<float>()
+            @> [ SpawnOption.Deploy(remoteDeploy remoteSystemAddress) ]
+    
+    API.dispatchMessage<float> remoter (API.StreamAPI.Unsubscribe "ss")
+    // remoter.Tell m 
 
     printfn "Press enter to close app"
 
