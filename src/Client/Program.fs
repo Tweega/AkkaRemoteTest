@@ -34,8 +34,8 @@ let config =
     Configuration.parse """
         akka {
             log-config-on-start = on
-            stdout-loglevel = WARNING
-            loglevel = WARNING
+            stdout-loglevel = DEBUG
+            loglevel = DEBUG
             actor {
                 provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
                 serializers {
@@ -88,9 +88,9 @@ let main argv =
     // all code will be serialized, deployed to remote system and there compiled and executed
         spawne system "remote" 
             <@ 
-                API.getAkkaMailbox()
+                API.getAkkaMailbox(1.1)
                 @> [ SpawnOption.Deploy(remoteDeploy remoteSystemAddress) ]
-    let m = (API.StreamAPI.Unsubscribe "ss")
+    let m: API.StreamAPI<float> = (API.StreamAPI.Unsubscribe "ss")
         
     remoter.Tell m
 

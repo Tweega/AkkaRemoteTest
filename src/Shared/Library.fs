@@ -6,16 +6,16 @@ module API =
     open Akka.Remote
     open Akka.Routing
 
-    type MessageHandler = float -> unit
-    type StreamAPI = 
-        | Subscribe of string * MessageHandler
+    type MessageHandler<'T> = 'T -> unit
+    type StreamAPI<'T> = 
+        | Subscribe of string * MessageHandler<'T>
         | Unsubscribe of string
 
     type APIState = {
         RequesterMap: Map<string, string>
     }
 
-    let handleAPIMsg(mailbox: Actor<StreamAPI>) (streamMsg:StreamAPI) (apiState:APIState) =
+    let handleAPIMsg(mailbox: Actor<StreamAPI<'T>>) (streamMsg:StreamAPI<'T>) (apiState:APIState) =
         match streamMsg with 
         | Subscribe (s, f) -> 
             printfn "Got Subscribe message: %s" s
@@ -31,9 +31,9 @@ module API =
             apiState
 
 
-    let getAkkaMailbox() = 
-        fun (mailbox: Actor<StreamAPI>) -> 
-            let rec loop(state: APIState): Cont<StreamAPI, APIState> = 
+    let getAkkaMailbox(_data: 'T) = 
+        fun (mailbox: Actor<StreamAPI<'T>>) -> 
+            let rec loop(state: APIState): Cont<StreamAPI<'T>, APIState> = 
                 actor { 
                     let! msg = mailbox.Receive()
                     let newState = 

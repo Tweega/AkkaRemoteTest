@@ -13,8 +13,8 @@ let config =
     Configuration.parse """
         akka {
             log-config-on-start = on
-            stdout-loglevel = WARNING
-            loglevel = WARNING
+            stdout-loglevel = DEBUG
+            loglevel = DEBUG
             actor {
                 provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
                 serializers {
